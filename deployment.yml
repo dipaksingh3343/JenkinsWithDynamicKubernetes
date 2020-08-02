@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhtml
+  labels:
+    app: webhtml
+spec:
+  ports:
+  - port: 80
+    nodePort: 30003
+  selector:
+    app: webhtml
+    tier: production
+  type: NodePort
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: webhtml-pvc
+  labels:
+    app: webhtml
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhtml
+  labels:
+    app: webhtml
+spec:
+  selector:
+   matchLabels:
+    app: webhtml
+    tier: production
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: webhtml
+        tier: production
+    spec: 
+       containers:
+       - image: vimal13/apache-webserver-php
+         name: webhtml
+         ports:
+         - containerPort: 80
+           name: webhtml
+         volumeMounts:
+         - name: webhtml-storage
+           mountPath: /var/www/html
+       volumes:
+       - name: webhtml-storage
+         persistentVolumeClaim:
+           claimName: webhtml-pvc
